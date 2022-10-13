@@ -52,7 +52,7 @@ class Auth:
 			raise TypeError("User origin is not set. Set it before setting role attribute with Auth.set_user_origin")
 
 	@staticmethod
-	def requires_token(operation):
+	def requires_stateless_token(operation):
 		def verify_auth(*args, **kwargs):
 			token = request.headers.get("token")
 			saved_token = None
@@ -103,37 +103,44 @@ class Auth:
 
 	@staticmethod
 	def generate_token(user) -> str or None:
-		response: str or None = None
-		if isinstance(user, Auth.class_name):
-			if Auth.secret_password is None:
-				Auth.set_password()
-			timestamp = datetime.now().strftime("%H:%M:%S")
+		response: str or None
+		if Auth.class_name is not None:
+			if isinstance(user, Auth.class_name):
+				if Auth.secret_password is None:
+					Auth.set_password()
+				timestamp = datetime.now().strftime("%H:%M:%S")
 
-			value: str = ""
-			for key in Auth.user_keys:
-				value += user.__getattribute__(key) + "/"
+				value: str = ""
+				for key in Auth.user_keys:
+					value += user.__getattribute__(key) + "/"
 
-			if Auth.role_attribute is not None:
-				current_role = user.__getattribute__(Auth.role_attribute)
-				if current_role is not None:
-					value += current_role + "/"
-				else:
-					value += "NONE/"
+				if Auth.role_attribute is not None:
+					current_role = user.__getattribute__(Auth.role_attribute)
+					if current_role is not None:
+						value += current_role + "/"
+					else:
+						value += "NONE/"
 
-			value += timestamp
-			response = encode(value, Auth.secret_password)
+				value += timestamp
+				response = encode(value, Auth.secret_password)
+			else:
+				raise TypeError("Provided user is not instance of User origin")
+		else:
+			raise TypeError("User origin is not set. Set it before setting role attribute with Auth.set_user_origin")
 		return response
 
 	@staticmethod
 	def decode_token(token: str) -> dict:
-		decoded_token = decode(token, Auth.secret_password)
-		decoded_token = decoded_token.split("/")
-		aux_dict: dict = {}
+		if Auth.secret_password is not None:
+			decoded_token = decode(token, Auth.secret_password)
+			decoded_token = decoded_token.split("/")
+			aux_dict: dict = {}
 
-		for key, value in zip(Auth.user_keys, decoded_token):
-			aux_dict[key] = value
+			for key, value in zip(Auth.user_keys, decoded_token):
+				aux_dict[key] = value
 
-		if Auth.role_attribute is not None:
-			aux_dict[Auth.role_attribute] = decoded_token[-2]
-
+			if Auth.role_attribute is not None:
+				aux_dict[Auth.role_attribute] = decoded_token[-2]
+		else:
+			raise TypeError("No token has been created. Cannot decode token")
 		return aux_dict
