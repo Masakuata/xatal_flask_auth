@@ -67,6 +67,7 @@ class StatefulSession:
 				if session is not None:
 					now = datetime.now()
 					if (now - session["session_start"]).total_seconds() < StatefulSession.session_lifetime:
+						session["session_start"] = now
 						response = operation(*args, **kwargs)
 					else:
 						response = Response(status=SESSION_EXPIRED)
@@ -87,10 +88,15 @@ class StatefulSession:
 					if token is not None:
 						session = StatefulSession.get_session(token)
 						if session is not None:
-							if str(session["data"][Auth.role_attribute]).lower() == role.lower():
-								response = operation(*args, **kwargs)
+							now = datetime.now()
+							if (now - session["session_start"]).total_seconds() < StatefulSession.session_lifetime:
+								if str(session["data"][Auth.role_attribute]).lower() == role.lower():
+									session["session_start"] = now
+									response = operation(*args, **kwargs)
+								else:
+									response = Response(status=FORBIDDEN)
 							else:
-								response = Response(status=FORBIDDEN)
+								response = Response(status=SESSION_EXPIRED)
 						else:
 							response = Response(status=SESSION_EXPIRED)
 					else:
