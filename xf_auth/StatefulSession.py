@@ -59,6 +59,15 @@ class StatefulSession:
 		return session
 
 	@staticmethod
+	def delete_session(token: str) -> bool:
+		deleted: bool = False
+		stored_session: dict = StatefulSession.get_session(token)
+		if stored_session is not None:
+			StatefulSession.session.remove(stored_session)
+			deleted = True
+		return deleted
+
+	@staticmethod
 	def requires_token(operation):
 		def verify_auth(*args, **kwargs):
 			token = request.headers.get("token")
