@@ -61,7 +61,7 @@ class StatefulSession:
 	@staticmethod
 	def requires_token(operation):
 		def verify_auth(*args, **kwargs):
-			token = request.json["token"]
+			token = request.headers.get("token")
 			if token is not None:
 				session = StatefulSession.get_session(token)
 				if session is not None:
@@ -83,7 +83,7 @@ class StatefulSession:
 		def decorator(operation):
 			def verify_role(*args, **kwargs):
 				if Auth.role_attribute is not None:
-					token = request.json["token"]
+					token = request.headers.get("token")
 					if token is not None:
 						session = StatefulSession.get_session(token)
 						if session is not None:
