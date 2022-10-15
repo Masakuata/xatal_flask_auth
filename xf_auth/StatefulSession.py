@@ -27,7 +27,7 @@ class StatefulSession:
 			"session_start": datetime.now()
 		})
 		if not SessionGarbageCollector.is_running:
-			threading.Thread(target=SessionGarbageCollector.start_collection()).start()
+			threading.Thread(target=SessionGarbageCollector.start_collection).start()
 		return token
 
 	@staticmethod
