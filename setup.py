@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
 	name='xf_auth',
-	version='0.7.0',
+	version='0.7.1',
 	description='A package to handle auth on flask. Made by Xatal',
 	url='https://github.com/Masakuata/xatal_flask_auth',
 	author='Edson Manuel Carballo Vera',
@@ -15,6 +15,7 @@ setup(
 		"Werkzeug~=2.2.2",
 		"requests~=2.28.1",
 		"setuptools~=60.2.0",
+		"validators==0.20.0"
 	],
 
 	classifiers=[
