@@ -1,12 +1,13 @@
 import threading
 from datetime import datetime
 from functools import update_wrapper
+from time import sleep
 
 from flask import request, Response
 
 from xf_auth.Auth import Auth
 from xf_auth.HTTPStatus import UNAUTHORIZED, SESSION_EXPIRED, FORBIDDEN
-from xf_auth.SessionGarbageCollector import SessionGarbageCollector
+from xf_auth.TelegramBot import TelegramBot
 
 
 class StatefulSession:
@@ -141,3 +142,27 @@ class StatefulSession:
 					is_in = True
 					break
 		return is_in
+
+
+class SessionGarbageCollector:
+	is_running: bool = False
+	bot: TelegramBot = TelegramBot("xf_session")
+
+	@staticmethod
+	def start_collection() -> None:
+		SessionGarbageCollector.is_running = True
+
+		while len(StatefulSession.session) > 0:
+			SessionGarbageCollector.notify_session_count()
+			now = datetime.now()
+			for session in StatefulSession.session:
+				if (now - session["session_start"]).total_seconds() > StatefulSession.session_lifetime:
+					StatefulSession.session.remove(session)
+			sleep(180)
+		SessionGarbageCollector.is_running = False
+
+	@staticmethod
+	def notify_session_count():
+		count: int = len(StatefulSession.session)
+		message: str = f"{count} active sessions"
+		SessionGarbageCollector.bot.send(message)
