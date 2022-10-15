@@ -11,11 +11,58 @@ from xf_auth.TelegramBot import TelegramBot
 
 
 class StatefulSession:
+	r"""
+	A helper class to handle sessions from remote clients through HTTP.
+
+	You can set the lifetime of the session in seconds like this:
+
+	>>> # Setting the session lifetime to 5 minutes
+	>>> StatefulSession.set_session_lifetime(300)
+
+	Create a new session with the following code:
+
+	>>> user = {"email": "mail@mail", "password": "g00dP4ssw0rD", "role": "admin"}
+	>>> session_token = StatefulSession.new_session(user)
+
+	Documentation still on the works.
+	If you need any help, do not think twice about writing an email to:
+
+	edsonmanuelcarballovera@gmail.com
+
+	or look for me on Twitter at:
+
+	@EdsonManuelVera
+
+	:copyright: (c) 2022 by Edson Manuel Carballo Vera
+	:license: MIT.
+	"""
 	session: list = []
 	session_lifetime: int = 600
 
 	@staticmethod
-	def new_session(data: dict) -> str or None:
+	def set_session_lifetime(seconds: int) -> None:
+		r"""Set the amount of seconds a session should last alive without interaction.
+
+		:param seconds:The amount of seconds until the session is deleted.
+		:raises TypeError: If the value provided is invalid or None.
+		:raises ValueError: If the amount of seconds is below 60 or above 1,800.
+		No session should last less than a minute or more than half an hour.
+		"""
+		if type(seconds) != int:
+			if 60 <= seconds <= 1_800:
+				StatefulSession.session_lifetime = seconds
+			else:
+				raise ValueError("Session lifetime should be between 60 and 1,800 seconds")
+		else:
+			raise TypeError("The value provided is not valid")
+
+	@staticmethod
+	def new_session(data: dict) -> str:
+		r"""Creates a new session and stores the provided data.
+
+		:param data: The data to save along the session.
+		:return: A session token. You should pass it to the client. He will need it later.
+		"""
 		stored_token = StatefulSession.__get_token_from_data(data)
 		if stored_token is not None:
 			return stored_token
@@ -32,6 +79,10 @@ class StatefulSession:
 
 	@staticmethod
 	def __new_token(data: dict) -> str:
+		r"""THIS METHOD IS NOT SUPPOSED TO BE USED FROM THE OUTSIDE.
+
+		STEP BACK.
+		"""
 		if Auth.class_name is not None:
 			aux_obj = Auth.class_name()
 			for key, value in data.items():
@@ -45,17 +96,29 @@ class StatefulSession:
 
 	@staticmethod
 	def get_data(token: str, stateless: bool = False) -> dict or None:
+		r"""Returns the session stored data
+
+		:param token: The session token provided when the session was started.
+		:param stateless: This param is not in use yet.
+		:return: A dict with the stored data.
+		None if the session does not exist.
+		"""
 		data: dict or None = None
 		for session in StatefulSession.session:
 			if session["token"] == token:
 				data = session["data"]
 				break
-		if data is None and stateless:
-			data = Auth.decode_token(token)
+		# if data is None and stateless:
+		# 	data = Auth.decode_token(token)
 		return data
 
 	@staticmethod
 	def get_session(token: str) -> dict or None:
+		r"""Returns the whole session, including the token and the start timestamp.
+
+		:param token: The session token provided when the session was started.
+		:return: A dict with the token, the session data and the session start timestamp.
+		"""
 		session: dict or None = None
 		for saved_session in StatefulSession.session:
 			if saved_session["token"] == token:
@@ -65,6 +128,15 @@ class StatefulSession:
 
 	@staticmethod
 	def delete_session(token: str) -> bool:
+		r"""Deletes a session.
+
+		THIS ACTION IS DESTRUCTIVE AND CANNOT BE REVERTED.
+
+		:param token: The session token provided when the session was started.
+		:return: A boolean indicating if the session was deleted successfully or not.
+		Any way, after this action, the session should be considered gone.
+		If you do not delete the session, the session reaper will.
+		"""
 		deleted: bool = False
 		stored_session: dict = StatefulSession.get_session(token)
 		if stored_session is not None:
@@ -74,6 +146,11 @@ class StatefulSession:
 
 	@staticmethod
 	def requires_token(operation):
+		r""" Use this oneliner decorator to indicate that a route operation requires a token to be processed.
+
+		If the token is not present, adequate responses will be sent according to the case.
+		"""
+
 		def verify_auth(*args, **kwargs):
 			token = request.headers.get("token")
 			if token is not None:
@@ -96,6 +173,11 @@ class StatefulSession:
 
 	@staticmethod
 	def requires_role(role: str):
+		r"""Use this oneliner decorator to indicate that a route operation requires a specific user role to be processed.
+		If you use this, there is no need to use StatefulSession.requires_token.
+		If the token is not present, or the user role does not match, adequate responses will be sent according to the case.
+		"""
+
 		def decorator(operation):
 			def verify_role(*args, **kwargs):
 				if Auth.role_attribute is not None:
@@ -127,6 +209,10 @@ class StatefulSession:
 
 	@staticmethod
 	def __get_token_from_data(data: dict) -> str or None:
+		r"""THIS METHOD IS NOT SUPPOSED TO BE USED FROM THE OUTSIDE.
+
+		STEP BACK.
+		"""
 		token: str or None = None
 		for session in StatefulSession.session:
 			if session["data"]["email"] == data["email"] and session["data"]["password"] == data["password"]:
@@ -135,6 +221,10 @@ class StatefulSession:
 
 	@staticmethod
 	def __is_session_in(data: dict) -> bool:
+		r"""THIS METHOD IS NOT SUPPOSED TO BE USED FROM THE OUTSIDE.
+
+		STEP BACK.
+		"""
 		is_in: bool = False
 		if data is not None:
 			for session in StatefulSession.session:
@@ -145,11 +235,20 @@ class StatefulSession:
 
 
 class SessionGarbageCollector:
+	r"""
+	THIS CLASS IS NOT SUPPOSED TO BE USED FROM THE OUTSIDE.
+
+	STEP BACK.
+	"""
 	is_running: bool = False
 	bot: TelegramBot = TelegramBot("xf_session")
 
 	@staticmethod
 	def start_collection() -> None:
+		r"""THIS METHOD IS NOT SUPPOSED TO BE USED FROM THE OUTSIDE.
+
+		STEP BACK.
+		"""
 		SessionGarbageCollector.is_running = True
 
 		while len(StatefulSession.session) > 0:
@@ -164,6 +263,10 @@ class SessionGarbageCollector:
 
 	@staticmethod
 	def notify_session_count():
+		r"""THIS METHOD IS NOT SUPPOSED TO BE USED FROM THE OUTSIDE.
+
+		STEP BACK.
+		"""
 		count: int = len(StatefulSession.session)
 		message: str = f"{count} active sessions"
 		SessionGarbageCollector.bot.send(message)
