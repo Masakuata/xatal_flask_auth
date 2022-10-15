@@ -1,3 +1,4 @@
+import threading
 from datetime import datetime
 from functools import update_wrapper
 
@@ -5,6 +6,7 @@ from flask import request, Response
 
 from xf_auth.Auth import Auth
 from xf_auth.HTTPStatus import UNAUTHORIZED, SESSION_EXPIRED, FORBIDDEN
+from xf_auth.SessionGarbageCollector import SessionGarbageCollector
 
 
 class StatefulSession:
@@ -23,6 +25,8 @@ class StatefulSession:
 			"data": data,
 			"session_start": datetime.now()
 		})
+		if not SessionGarbageCollector.is_running:
+			threading.Thread(target=SessionGarbageCollector.start_collection()).start()
 		return token
 
 	@staticmethod
@@ -79,6 +83,7 @@ class StatefulSession:
 						session["session_start"] = now
 						response = operation(*args, **kwargs)
 					else:
+						StatefulSession.delete_session(token)
 						response = Response(status=SESSION_EXPIRED)
 				else:
 					response = Response(status=UNAUTHORIZED)
