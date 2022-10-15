@@ -12,7 +12,7 @@ from xf_auth.TelegramBot import TelegramBot
 
 class StatefulSession:
 	session: list = []
-	session_lifetime: int = 6_000
+	session_lifetime: int = 600
 
 	@staticmethod
 	def new_session(data: dict) -> str or None:
@@ -156,7 +156,8 @@ class SessionGarbageCollector:
 			SessionGarbageCollector.notify_session_count()
 			now = datetime.now()
 			for session in StatefulSession.session:
-				if (now - session["session_start"]).total_seconds() > StatefulSession.session_lifetime:
+				session_time = (now - session["session_start"]).total_seconds()
+				if session_time > StatefulSession.session_lifetime:
 					StatefulSession.session.remove(session)
 			sleep(180)
 		SessionGarbageCollector.is_running = False
