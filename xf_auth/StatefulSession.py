@@ -104,13 +104,26 @@ class StatefulSession:
 		None if the session does not exist.
 		"""
 		data: dict or None = None
-		for session in StatefulSession.session:
-			if session["token"] == token:
-				data = session["data"]
-				break
+		session = StatefulSession.get_session(token)
+		if session is not None:
+			data = session["data"]
 		# if data is None and stateless:
 		# 	data = Auth.decode_token(token)
 		return data
+
+	@staticmethod
+	def update_data(token: str, new_data: dict) -> dict or None:
+		r"""Updates the data stored on the session
+
+		:param token: The session token provided when the session was started
+		:param new_data: The data that will override the old information in the session
+		:return: A dict with the session data. None if there's no information
+		"""
+		session = StatefulSession.get_session(token)
+		if session is not None:
+			session["data"] = new_data
+			return new_data
+		return None
 
 	@staticmethod
 	def get_session(token: str) -> dict or None:
