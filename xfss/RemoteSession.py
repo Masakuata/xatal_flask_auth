@@ -249,8 +249,9 @@ class RemoteSession:
 					url: str = RemoteSession.__get_full_url() + "/requires_role"
 
 					headers: dict = {"token": token}
+					payload: dict = {"role": role}
 
-					request_result = requests.get(url, headers=headers)
+					request_result = requests.get(url, headers=headers, json=payload)
 					if request_result.status_code == HTTPStatus.OK.value:
 						response = operation(*args, **kwargs)
 					else:
