@@ -236,7 +236,7 @@ class RemoteSession:
 		return update_wrapper(verify_auth, operation)
 
 	@staticmethod
-	def requires_role(role: str):
+	def requires_role(role: str or list):
 		r"""Use this oneliner decorator to indicate that a route operation requires a specific user role to be processed.
 		If you use this, there is no need to use StatefulSession.requires_token.
 		If the token is not present, or the user role does not match, adequate responses will be sent according to the case.

@@ -167,23 +167,23 @@ class StatefulSession:
 
 		def verify_auth(*args, **kwargs):
 			token = request.headers.get("token")
+			response = Response(status=NOT_ACCEPTABLE)
+
 			if token is not None:
 				session = StatefulSession.get_session(token)
+				response = Response(status=NOT_FOUND)
+
 				if session is not None:
+					response = Response(status=SESSION_EXPIRED)
+
 					if StatefulSession.__is_session_alive(session):
 						response = operation(*args, **kwargs)
-					else:
-						response = Response(status=SESSION_EXPIRED)
-				else:
-					response = Response(status=NOT_FOUND)
-			else:
-				response = Response(status=NOT_ACCEPTABLE)
 			return response
 
 		return update_wrapper(verify_auth, operation)
 
 	@staticmethod
-	def requires_role(role: str):
+	def requires_role(role: str or list):
 		r"""Use this oneliner decorator to indicate that a route operation requires a specific user role to be processed.
 		If you use this, there is no need to use StatefulSession.requires_token.
 		If the token is not present, or the user role does not match, adequate responses will be sent according to the case.
@@ -193,20 +193,28 @@ class StatefulSession:
 			def verify_role(*args, **kwargs):
 				if Auth.role_attribute is not None:
 					token = request.headers.get("token")
+					response = Response(status=NOT_ACCEPTABLE)
+
 					if token is not None:
 						session = StatefulSession.get_session(token)
+						response = Response(status=NOT_FOUND)
+
 						if session is not None:
+							response = Response(status=SESSION_EXPIRED)
+
 							if StatefulSession.__is_session_alive(session):
-								if str(session["data"][Auth.role_attribute]).lower() == role.lower():
-									response = operation(*args, **kwargs)
-								else:
+								if type(role) == str:
 									response = Response(status=FORBIDDEN)
-							else:
-								response = Response(status=SESSION_EXPIRED)
-						else:
-							response = Response(status=NOT_FOUND)
-					else:
-						response = Response(status=NOT_ACCEPTABLE)
+
+									if str(session["data"][Auth.role_attribute]).lower() == role.lower():
+										response = operation(*args, **kwargs)
+								elif type(role) == list:
+									response = Response(status=FORBIDDEN)
+
+									if str(session["data"][Auth.role_attribute]) in role:
+										response = operation(*args, **kwargs)
+								else:
+									response = Response(status=NOT_ACCEPTABLE)
 				else:
 					raise TypeError(
 						"User role attribute is not set. Set it with Auth.set_role_attribute")
@@ -224,7 +232,13 @@ class StatefulSession:
 		"""
 		token: str or None = None
 		for session in StatefulSession.session:
-			if session["data"]["email"] == data["email"] and session["data"]["password"] == data["password"]:
+			all_in: bool = True
+			for key in Auth.user_keys:
+				if session["data"][key] != data[key]:
+					all_in = False
+					break
+
+			if all_in:
 				token = session["token"]
 		return token
 
@@ -237,9 +251,17 @@ class StatefulSession:
 		is_in: bool = False
 		if data is not None:
 			for session in StatefulSession.session:
-				if session["data"]["email"] == data["email"] and session["data"]["password"] == data["password"]:
+				all_in: bool = True
+
+				for key in Auth.user_keys:
+					if session["data"][key] != data[key]:
+						all_in = False
+						break
+
+				if all_in:
 					is_in = True
 					break
+
 		return is_in
 
 	@staticmethod
