@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
 	name='xf_auth',
-	version='0.7.2',
+	version='0.7.3',
 	description='A package to handle auth on flask. Made by Xatal',
 	url='https://github.com/Masakuata/xatal_flask_auth',
 	download_url="https://pypi.org/project/xf-auth/",
