@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
 	name='xfss',
-	version='0.8.3',
+	version='0.8.4',
 	description='A package to handle auth on flask. Made by Xatal',
 	url='https://github.com/Masakuata/xatal_flask_auth',
 	download_url="https://pypi.org/project/xf-auth/",
