@@ -4,7 +4,7 @@ import requests
 import validators
 from flask import request, Response
 
-from xf_auth.HTTPStatus import HTTPStatus, NOT_ACCEPTABLE
+from xfss.HTTPStatus import HTTPStatus, NOT_ACCEPTABLE
 
 
 class RemoteSession:

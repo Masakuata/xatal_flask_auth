@@ -6,8 +6,8 @@ from cryptography.fernet import Fernet
 from flask import Response, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from xf_auth.HTTPStatus import UNAUTHORIZED, SESSION_EXPIRED, FORBIDDEN, NOT_ACCEPTABLE
-from xf_auth.Util import decode, included, encode
+from xfss.HTTPStatus import UNAUTHORIZED, SESSION_EXPIRED, FORBIDDEN, NOT_ACCEPTABLE
+from xfss.Util import decode, included, encode
 
 
 class Auth:

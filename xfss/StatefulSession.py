@@ -5,9 +5,9 @@ from time import sleep
 
 from flask import request, Response
 
-from xf_auth.Auth import Auth
-from xf_auth.HTTPStatus import SESSION_EXPIRED, FORBIDDEN, NOT_ACCEPTABLE, NOT_FOUND
-from xf_auth.TelegramBot import TelegramBot
+from xfss.Auth import Auth
+from xfss.HTTPStatus import SESSION_EXPIRED, FORBIDDEN, NOT_ACCEPTABLE, NOT_FOUND
+from xfss.TelegramBot import TelegramBot
 
 
 class StatefulSession:
@@ -169,12 +169,9 @@ class StatefulSession:
 			if token is not None:
 				session = StatefulSession.get_session(token)
 				if session is not None:
-					now = datetime.now()
-					if (now - session["session_start"]).total_seconds() < StatefulSession.session_lifetime:
-						session["session_start"] = now
+					if StatefulSession.__is_session_alive(session):
 						response = operation(*args, **kwargs)
 					else:
-						StatefulSession.delete_session(token)
 						response = Response(status=SESSION_EXPIRED)
 				else:
 					response = Response(status=NOT_FOUND)
@@ -198,10 +195,8 @@ class StatefulSession:
 					if token is not None:
 						session = StatefulSession.get_session(token)
 						if session is not None:
-							now = datetime.now()
-							if (now - session["session_start"]).total_seconds() < StatefulSession.session_lifetime:
+							if StatefulSession.__is_session_alive(session):
 								if str(session["data"][Auth.role_attribute]).lower() == role.lower():
-									session["session_start"] = now
 									response = operation(*args, **kwargs)
 								else:
 									response = Response(status=FORBIDDEN)
@@ -245,6 +240,21 @@ class StatefulSession:
 					is_in = True
 					break
 		return is_in
+
+	@staticmethod
+	def __is_session_alive(session: dict) -> bool:
+		r"""THIS METHOD IS NOT SUPPOSED TO BE USED FROM THE OUTSIDE
+
+		STEP BACK
+		"""
+		is_alive: bool = False
+		now = datetime.now()
+		if (now - session["session_start"]).total_seconds() < StatefulSession.session_lifetime:
+			session["session_start"] = now
+			is_alive = True
+		else:
+			StatefulSession.session.remove(session)
+		return is_alive
 
 
 class SessionGarbageCollector:
