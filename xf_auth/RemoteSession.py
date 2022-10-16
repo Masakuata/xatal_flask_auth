@@ -234,3 +234,31 @@ class RemoteSession:
 			return response
 
 		return update_wrapper(verify_auth, operation)
+
+	@staticmethod
+	def requires_role(role: str):
+		r"""Use this oneliner decorator to indicate that a route operation requires a specific user role to be processed.
+		If you use this, there is no need to use StatefulSession.requires_token.
+		If the token is not present, or the user role does not match, adequate responses will be sent according to the case.
+		"""
+
+		def decorator(operation):
+			def verify_role(*args, **kwargs):
+				token = request.headers.get("token")
+				if token is not None:
+					url: str = RemoteSession.__get_full_url() + "/requires_role"
+
+					headers: dict = {"token": token}
+
+					request_result = requests.get(url, headers=headers)
+					if request_result.status_code == HTTPStatus.OK.value:
+						response = operation(*args, **kwargs)
+					else:
+						response = Response(status=request_result.status_code)
+				else:
+					response = Response(status=NOT_ACCEPTABLE)
+				return response
+
+			return update_wrapper(verify_role, operation)
+
+		return decorator
