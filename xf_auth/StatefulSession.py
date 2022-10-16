@@ -6,7 +6,7 @@ from time import sleep
 from flask import request, Response
 
 from xf_auth.Auth import Auth
-from xf_auth.HTTPStatus import UNAUTHORIZED, SESSION_EXPIRED, FORBIDDEN, NOT_ACCEPTABLE, NOT_FOUND
+from xf_auth.HTTPStatus import SESSION_EXPIRED, FORBIDDEN, NOT_ACCEPTABLE, NOT_FOUND
 from xf_auth.TelegramBot import TelegramBot
 
 

@@ -1,7 +1,10 @@
+from functools import update_wrapper
+
 import requests
 import validators
+from flask import request, Response
 
-from xf_auth.HTTPStatus import HTTPStatus
+from xf_auth.HTTPStatus import HTTPStatus, NOT_ACCEPTABLE
 
 
 class RemoteSession:
@@ -143,7 +146,7 @@ class RemoteSession:
 		r"""Updates the session information
 
 		THIS ACTION IS DESTRUCTIVE. THE NEW INFORMATION WILL OVERRIDE ALL INFORMATION ON THE SESSION.
-		It's recomended that you retrieve the stored information and then append the new information to that.
+		It's recommended that you retrieve the stored information and then append the new information to that.
 		Otherwise, the old information will be lost.
 		:param token: The session token provided when the session was started.
 		:param new_data: The new data that will be stored on the server.
@@ -205,3 +208,29 @@ class RemoteSession:
 			return response.status_code == HTTPStatus.OK.value
 		else:
 			raise TypeError("Token is not valid")
+
+	@staticmethod
+	def requires_token(operation):
+		r""" Use this oneliner decorator to indicate that a route operation requires a token to be processed.
+
+		If the token is not present, adequate responses will be sent according to the case.
+		"""
+
+		def verify_auth(*args, **kwargs):
+			token = request.headers.get("token")
+			if token is not None:
+				url: str = RemoteSession.__get_full_url()
+				url += "/requires_token"
+
+				headers: dict = {"token": token}
+
+				request_result = requests.get(url, headers=headers)
+				if request_result.status_code == HTTPStatus.OK.value:
+					response = operation(*args, **kwargs)
+				else:
+					response = Response(status=request_result.status_code)
+			else:
+				response = Response(status=NOT_ACCEPTABLE)
+			return response
+
+		return update_wrapper(verify_auth, operation)
