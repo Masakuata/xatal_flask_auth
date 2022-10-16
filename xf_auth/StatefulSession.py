@@ -6,7 +6,7 @@ from time import sleep
 from flask import request, Response
 
 from xf_auth.Auth import Auth
-from xf_auth.HTTPStatus import UNAUTHORIZED, SESSION_EXPIRED, FORBIDDEN
+from xf_auth.HTTPStatus import UNAUTHORIZED, SESSION_EXPIRED, FORBIDDEN, NOT_ACCEPTABLE, NOT_FOUND
 from xf_auth.TelegramBot import TelegramBot
 
 
@@ -164,9 +164,9 @@ class StatefulSession:
 						StatefulSession.delete_session(token)
 						response = Response(status=SESSION_EXPIRED)
 				else:
-					response = Response(status=UNAUTHORIZED)
+					response = Response(status=NOT_FOUND)
 			else:
-				response = Response(status=UNAUTHORIZED)
+				response = Response(status=NOT_ACCEPTABLE)
 			return response
 
 		return update_wrapper(verify_auth, operation)
@@ -195,9 +195,9 @@ class StatefulSession:
 							else:
 								response = Response(status=SESSION_EXPIRED)
 						else:
-							response = Response(status=SESSION_EXPIRED)
+							response = Response(status=NOT_FOUND)
 					else:
-						response = Response(status=UNAUTHORIZED)
+						response = Response(status=NOT_ACCEPTABLE)
 				else:
 					raise TypeError(
 						"User role attribute is not set. Set it with Auth.set_role_attribute")

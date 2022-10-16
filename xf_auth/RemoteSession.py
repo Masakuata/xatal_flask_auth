@@ -90,7 +90,7 @@ class RemoteSession:
 			raise TypeError("Port is not valid")
 
 	@staticmethod
-	def init_session(payload: dict) -> Tuple[int, str] or Tuple[int, None]:
+	def init_session(payload: dict) -> dict:
 		r"""Creates a new session on the remote session server.
 
 		:param payload: Dictionary with the email, password and role (optional) of the user to log in.
@@ -107,8 +107,11 @@ class RemoteSession:
 
 			response = requests.post(url, json=payload)
 			if response.status_code == HTTPStatus.RESOURCE_CREATED.value:
-				return response.status_code, response.json()["token"]
-			return response.status_code, None
+				return {
+					"STATUS": response.status_code,
+					"TOKEN": response.json()["token"]
+				}
+			return {"STATUS": response.status_code, "TOKEN": None}
 		else:
 			raise ValueError("Email and password are required")
 
@@ -151,7 +154,7 @@ class RemoteSession:
 
 			headers: dict = {"token": token}
 
-			response = requests.put(url, headers=headers)
+			response = requests.patch(url, headers=headers)
 			return response.status_code == HTTPStatus.OK.value
 		else:
 			raise TypeError("Token is not valid")
