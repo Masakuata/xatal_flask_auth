@@ -141,6 +141,33 @@ class RemoteSession:
 			raise TypeError("Token is not valid")
 
 	@staticmethod
+	def update_session(token: str, new_data: dict) -> dict or int:
+		r"""Updates the session information
+
+		THIS ACTION IS DESTRUCTIVE. THE NEW INFORMATION WILL OVERRIDE ALL INFORMATION ON THE SESSION.
+		It's recomended that you retrieve the stored information and then append the new information to that.
+		Otherwise, the old information will be lost.
+		:param token: The session token provided when the session was started.
+		:param new_data: The new data that will be stored on the server.
+		:return: A dict with all the information on the session after the update is performed.
+		An int with the status code if the request fails.
+		:raises TypeError: If the token is not valid or None.
+		"""
+		if token is not None and new_data is not None:
+			url: str = RemoteSession.__get_full_url()
+			url += "/session"
+
+			headers: dict = {"token": token}
+
+			response = requests.patch(url, json=new_data, headers=headers)
+			if response.status_code == HTTPStatus.OK.value:
+				return response.json()
+			else:
+				return response.status_code
+		else:
+			raise TypeError("Token or new data is not valid")
+
+	@staticmethod
 	def is_session_alive(token: str) -> bool:
 		r"""Check if the session is still alive in the remote server
 
@@ -154,7 +181,7 @@ class RemoteSession:
 
 			headers: dict = {"token": token}
 
-			response = requests.patch(url, headers=headers)
+			response = requests.put(url, headers=headers)
 			return response.status_code == HTTPStatus.OK.value
 		else:
 			raise TypeError("Token is not valid")
