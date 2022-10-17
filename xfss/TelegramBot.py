@@ -4,6 +4,10 @@ import requests
 
 
 class TelegramBot:
+	"""This class is only to help me debug things that are in a remote server.
+
+	Please step back.
+	"""
 	def __init__(self, groupId: str):
 		self.groupId = groupId
 		self.messages: list = []

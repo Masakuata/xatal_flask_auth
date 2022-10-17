@@ -1,5 +1,5 @@
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import update_wrapper
 from time import sleep
 
@@ -298,13 +298,24 @@ class SessionGarbageCollector:
 		SessionGarbageCollector.is_running = True
 
 		while len(StatefulSession.session) > 0:
-			SessionGarbageCollector.notify_session_count()
+			threading.Thread(target=SessionGarbageCollector.notify_session_count).start()
+
 			now = datetime.now()
+			min_wait = None
 			for session in StatefulSession.session:
-				session_time = (now - session["session_start"]).total_seconds()
-				if session_time > StatefulSession.session_lifetime:
+				if (now - session["session_start"]).total_seconds() > StatefulSession.session_lifetime:
 					StatefulSession.session.remove(session)
-			sleep(180)
+					del session
+				else:
+					end_time = datetime(session["session_start"]) + timedelta(seconds=StatefulSession.session_lifetime)
+					time_left = (end_time - now).total_seconds()
+					if min_wait is None:
+						min_wait = time_left
+					else:
+						if time_left < min_wait:
+							min_wait = time_left
+
+			sleep(min_wait)
 		SessionGarbageCollector.is_running = False
 
 	@staticmethod
