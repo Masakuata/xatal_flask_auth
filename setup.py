@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
 	name='xfss',
-	version='0.8.5',
+	version='0.9.0',
 	description='A package to handle auth on flask. Made by Xatal',
 	url='https://github.com/Masakuata/xatal_flask_auth',
 	download_url="https://pypi.org/project/xf-auth/",
@@ -11,7 +11,7 @@ setup(
 	license='MIT License',
 	packages=['xfss'],
 	install_requires=[
-		'cryptography==3.1.1',
+		'cryptography==41.0.1',
 		"Flask~=2.2.2",
 		"Werkzeug~=2.2.2",
 		"requests~=2.28.1",
